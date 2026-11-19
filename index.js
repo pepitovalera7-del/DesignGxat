@@ -15,7 +15,10 @@ const client = new Client({ intents: [
 const supportRoleId = process.env.SUPPORT_ROLE_ID;
 const logChannelId = process.env.LOG_CHANNEL_ID;
 const welcomeChannelId = process.env.WELCOME_CHANNEL_ID;
-const ticketCategoryId = process.env.TICKET_CATEGORY_ID;\nconst findRole = guild => supportRoleId ? guild.roles.cache.get(supportRoleId) : guild.roles.cache.find(r=>r.name==='Support');\nconst findChannel = (guild, id, name) => id ? guild.channels.cache.get(id) : guild.channels.cache.find(c=>c.name===name && c.isTextBased());\nconst findCategory = guild => ticketCategoryId ? guild.channels.cache.get(ticketCategoryId) : guild.channels.cache.find(c=>c.type===ChannelType.GuildCategory && c.name==='TICKETS');
+const ticketCategoryId = process.env.TICKET_CATEGORY_ID;
+const findRole = guild => supportRoleId ? guild.roles.cache.get(supportRoleId) : guild.roles.cache.find(r=>r.name==='Support');
+const findChannel = (guild, id, name) => id ? guild.channels.cache.get(id) : guild.channels.cache.find(c=>c.name===name && c.isTextBased());
+const findCategory = guild => ticketCategoryId ? guild.channels.cache.get(ticketCategoryId) : guild.channels.cache.find(c=>c.type===ChannelType.GuildCategory && c.name==='TICKETS');
 const ticketOwners = new Map();
 const claimedTickets = new Map();
 
@@ -28,6 +31,14 @@ const commands = [
     .addStringOption(o=>o.setName('premio').setDescription('Premio del sorteo').setRequired(true))
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   new SlashCommandBuilder().setName('cerrar').setDescription('Cierra el ticket actual').setDefaultMemberPermissions(PermissionFlagsBits.ManageChannels),
+  new SlashCommandBuilder().setName('ayuda').setDescription('Muestra los comandos disponibles'),
+  new SlashCommandBuilder().setName('ping').setDescription('Comprueba si el bot está conectado'),
+  new SlashCommandBuilder().setName('limpiar').setDescription('Borra mensajes recientes del canal')
+    .addIntegerOption(o=>o.setName('cantidad').setDescription('Cantidad de mensajes (1 a 100)').setMinValue(1).setMaxValue(100).setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+  new SlashCommandBuilder().setName('anuncio').setDescription('Publica un anuncio de Gxat Design')
+    .addStringOption(o=>o.setName('mensaje').setDescription('Texto del anuncio').setRequired(true))
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
   new SlashCommandBuilder().setName('setup-info').setDescription('Muestra el estado de la configuración').setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
 ].map(c=>c.toJSON());
 
@@ -85,8 +96,10 @@ client.once('ready', async()=>{
   console.log(`Conectado como ${client.user.tag}`);
   const rest=new REST({version:'10'}).setToken(process.env.DISCORD_TOKEN);
   try {
-    await rest.put(Routes.applicationCommands(client.user.id),{body:commands});
-    console.log('Comandos registrados.');
+    for (const guild of client.guilds.cache.values()) {
+      await rest.put(Routes.applicationGuildCommands(client.user.id,guild.id),{body:commands});
+      console.log(`Comandos registrados en ${guild.name}.`);
+    }
   } catch(e){console.error('Error registrando comandos:',e);}
 });
 
@@ -136,6 +149,35 @@ client.on('interactionCreate',async interaction=>{
         if(!interaction.channel.name.startsWith('ticket-'))return interaction.reply({content:'Este comando solo se puede usar dentro de un ticket.',ephemeral:true});
         await interaction.reply({content:'Cerrando y generando transcripción…',ephemeral:true});
         return closeTicket(interaction.channel,interaction.user);
+      }
+      if(interaction.commandName==='ayuda'){
+        const embed=new EmbedBuilder().setColor(0x0066FF).setTitle('Gxat Design | Comandos')
+          .setDescription([
+            '`/panel` — Publica el panel para abrir tickets.',
+            '`/verificacion` — Publica el panel de verificación.',
+            '`/giveaway` — Inicia un sorteo.',
+            '`/cerrar` — Cierra el ticket actual.',
+            '`/setup-info` — Revisa la configuración.',
+            '`/ping` — Comprueba la conexión del bot.',
+            '`/limpiar` — Borra mensajes recientes (Staff).',
+            '`/anuncio` — Publica un anuncio (Staff).',
+            '`/ayuda` — Muestra esta lista.'
+          ].join('\\n'));
+        return interaction.reply({embeds:[embed],ephemeral:true});
+      }
+      if(interaction.commandName==='ping'){
+        return interaction.reply({content:`🏓 Pong. Latencia: ${client.ws.ping} ms`,ephemeral:true});
+      }
+      if(interaction.commandName==='limpiar'){
+        const amount=interaction.options.getInteger('cantidad');
+        const deleted=await interaction.channel.bulkDelete(amount,true);
+        return interaction.reply({content:`Se eliminaron ${deleted.size} mensajes.`,ephemeral:true});
+      }
+      if(interaction.commandName==='anuncio'){
+        const message=interaction.options.getString('mensaje');
+        const embed=new EmbedBuilder().setColor(0x0066FF).setTitle('Gxat Design | Anuncio').setDescription(message).setTimestamp();
+        await interaction.channel.send({embeds:[embed]});
+        return interaction.reply({content:'Anuncio publicado.',ephemeral:true});
       }
       if(interaction.commandName==='setup-info'){
         return interaction.reply({content:`**Configuración**\nSupport role: ${findRole(interaction.guild)?findRole(interaction.guild):'No configurado'}\nLogs: ${findChannel(interaction.guild,logChannelId,'logs')||'No configurado'}\nBienvenida: ${findChannel(interaction.guild,welcomeChannelId,'bienvenida')||'No configurado'}\nCategoría tickets: ${findCategory(interaction.guild)||'No configurada'}`,ephemeral:true});
