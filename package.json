@@ -1,8 +1,16 @@
 {
-  "name": "gxat-design-bot",
-  "version": "1.0.0",
-  "description": "Professional Discord bot for Gxat Design",
+  "name": "gxat-design-advanced",
+  "version": "2.0.0",
+  "description": "Bot avanzado de Discord para Gxat Design",
   "main": "index.js",
-  "scripts": {"start": "node index.js"},
-  "dependencies": {"discord.js": "^14.19.3", "dotenv": "^16.4.7"}
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.4.7"
+  }
 }

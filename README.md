@@ -1,29 +1,24 @@
-# Gxat Design Bot — Railway ready
+# Gxat Design Bot — Advanced
+Bot de Discord con Discord.js v14.
 
-## Deploy in Railway (minimal setup)
-1. Upload this project to a GitHub repository.
-2. In Railway, create a new project and deploy from that GitHub repository.
-3. In the service Variables tab, add only:
-   - `DISCORD_TOKEN` — token from Discord Developer Portal.
-   - `SUPPORT_ROLE_ID` — optional; if omitted, bot looks for role named **Support**.
-   - `LOG_CHANNEL_ID` — optional; if omitted, bot looks for a channel named **logs**.
-   - `WELCOME_CHANNEL_ID` — optional; if omitted, bot looks for channel named **bienvenida**.
-   - `TICKET_CATEGORY_ID` — optional; if omitted, bot looks for category named **TICKETS**.
-4. Discord Developer Portal > Bot: enable **Server Members Intent** and **Message Content Intent**.
-5. Invite the bot with `bot` and `applications.commands` scopes and the required permissions.
-6. Deploy/redeploy on Railway.
+## Instalación
+1. Sube `index.js`, `package.json`, `Procfile`, `.env.example` y `.gitignore` al repositorio.
+2. En el hosting usa Node.js 20 o 22 y comando `npm start`.
+3. Configura `DISCORD_TOKEN` en Startup/Variables. No publiques el token.
+4. Invita el bot con scopes `bot` y `applications.commands`.
+5. Permisos recomendados: Manage Channels, View Channels, Send Messages, Embed Links, Read Message History, Attach Files, Manage Messages y Manage Roles (si usa verificación).
+6. Activa Server Members Intent y Message Content Intent en Developer Portal.
 
-The bot registers slash commands globally using the logged-in bot's application ID. Global command propagation can take some time.
+## Variables
+- `DISCORD_TOKEN`: token del bot.
+- `SUPPORT_ROLE_ID`: ID del rol Support.
+- `LOG_CHANNEL_ID`: ID del canal de logs.
+- `WELCOME_CHANNEL_ID`: ID del canal de bienvenida.
+- `TICKET_CATEGORY_ID`: ID de la categoría donde crear tickets.
+- `VERIFIED_ROLE_ID`: ID del rol de verificados.
 
-## Server setup
-Create a role named `Support`, a role named `Verified`, and optionally channels named `logs` and `bienvenida` and category `TICKETS`. For verification to work, configure the Verified role's channel permissions appropriately.
+## Comandos
+`/ayuda`, `/ping`, `/panel`, `/verificacion`, `/giveaway`, `/reroll`, `/cerrar`, `/reclamar`, `/agregar`, `/quitar`, `/transcript`, `/limpiar`, `/anuncio`, `/userinfo`, `/serverinfo`, `/setup-info`.
 
-## Commands
-`/panel`, `/verificacion`, `/giveaway`, `/cerrar`, `/setup-info`.
-
-## Important notes
-- Keep the token private and never commit `.env` to GitHub.
-- Discord admins can see private channels by design.
-- Transcript delivery via DM may fail if the member blocks DMs. Logs provide an additional copy if configured.
-- Transcript is an HTML file with message text, attachment links, and basic embed summaries. It does not download attachment files themselves.
-- Railway usage/limits depend on your account and plan.
+Los comandos globales pueden tardar un tiempo en aparecer en Discord tras el primer registro.
+Los sorteos activos se guardan en `data/giveaways.json`; usa almacenamiento persistente en el hosting para conservarlos al reiniciar.
